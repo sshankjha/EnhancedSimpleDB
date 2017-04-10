@@ -43,4 +43,6 @@ public interface LogRecord {
     * @param txnum the id of the transaction that is performing the undo.
     */
    void undo(int txnum);
+   
+   void redo(int txnum);
 }

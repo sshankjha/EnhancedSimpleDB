@@ -15,6 +15,7 @@ class CommitRecord implements LogRecord {
     */
    public CommitRecord(int txnum) {
       this.txnum = txnum;
+      //System.out.println(this);
    }
    
    /**
@@ -53,4 +54,9 @@ class CommitRecord implements LogRecord {
    public String toString() {
       return "<COMMIT " + txnum + ">";
    }
+
+	@Override
+	public void redo(int txnum) {
+		
+	}
 }

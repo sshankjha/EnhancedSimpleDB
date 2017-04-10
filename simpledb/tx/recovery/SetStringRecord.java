@@ -1,14 +1,16 @@
 package simpledb.tx.recovery;
 
 import simpledb.server.SimpleDB;
+
 import simpledb.buffer.*;
 import simpledb.file.Block;
 import simpledb.log.BasicLogRecord;
 
 class SetStringRecord implements LogRecord {
    private int txnum, offset;
-   private String val;
+   private String oldval, newval;
    private Block blk;
+
    
    /**
     * Creates a new setstring log record.
@@ -17,11 +19,13 @@ class SetStringRecord implements LogRecord {
     * @param offset the offset of the value in the block
     * @param val the new value
     */
-   public SetStringRecord(int txnum, Block blk, int offset, String val) {
+   public SetStringRecord(int txnum, Block blk, int offset, String newval, String oldval) {
       this.txnum = txnum;
       this.blk = blk;
       this.offset = offset;
-      this.val = val;
+      this.newval = newval;
+      this.oldval = oldval;
+      
    }
    
    /**
@@ -34,7 +38,9 @@ class SetStringRecord implements LogRecord {
       int blknum = rec.nextInt();
       blk = new Block(filename, blknum);
       offset = rec.nextInt();
-      val = rec.nextString();
+      newval = rec.nextString();
+      oldval = rec.nextString();
+      //System.out.println(this);
    }
    
    /** 
@@ -47,7 +53,7 @@ class SetStringRecord implements LogRecord {
     */
    public int writeToLog() {
       Object[] rec = new Object[] {SETSTRING, txnum, blk.fileName(),
-         blk.number(), offset, val};
+         blk.number(), offset, newval, oldval};
       return logMgr.append(rec);
    }
    
@@ -60,7 +66,7 @@ class SetStringRecord implements LogRecord {
    }
    
    public String toString() {
-      return "<SETSTRING " + txnum + " " + blk + " " + offset + " " + val + ">";
+      return "<SETSTRING " + txnum + " " + blk + " " + offset + " " + newval + " " + oldval +">";
    }
    
    /** 
@@ -73,7 +79,15 @@ class SetStringRecord implements LogRecord {
    public void undo(int txnum) {
       BufferMgr buffMgr = SimpleDB.bufferMgr();
       Buffer buff = buffMgr.pin(blk);
-      buff.setString(offset, val, txnum, -1);
+      buff.setString(offset, oldval, txnum, -1);
       buffMgr.unpin(buff);
    }
+   
+   public void redo (int txnum) {
+	  BufferMgr buffMgr = SimpleDB.bufferMgr();
+	  Buffer buff = buffMgr.pin(blk);
+      buff.setString(offset, newval, txnum, -1);
+	  buffMgr.unpin(buff);
+   }
+   
 }
